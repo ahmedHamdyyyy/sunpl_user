@@ -27,6 +27,9 @@ class _ProductDetailsState extends State<ProductDetails>
   bool isFavorite = false;
   bool isExpanded = false;
 
+  final PageController _pageController = PageController();
+  int _currentPageIndex = 0;
+
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
@@ -127,15 +130,19 @@ class _ProductDetailsState extends State<ProductDetails>
     _scaleController.dispose();
     _pulseController.dispose();
     _rotateController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   Widget _buildImageSection() {
+    final allImages = widget.product.allImages;
+    final hasMultipleImages = widget.product.hasMultipleImages;
+    
     return Container(
       height: Get.height * 0.45,
       child: Stack(
         children: [
-          // Main product image
+          // Main product images carousel
           Hero(
             tag: "product${widget.product.id}",
             child: Container(
@@ -151,58 +158,9 @@ class _ProductDetailsState extends State<ProductDetails>
                   ],
                 ),
               ),
-              child: CachedNetworkImage(
-                imageUrl: widget.product.image,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppThemes.primaryColor.withOpacity(0.2),
-                        AppThemes.primaryColor.withOpacity(0.1),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppThemes.primaryColor,
-                      strokeWidth: 3,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppThemes.primaryColor.withOpacity(0.3),
-                        AppThemes.primaryColor.withOpacity(0.1),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Ionicons.image_outline,
-                          size: 64,
-                          color: AppThemes.primaryColor,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          LocalizeAndTranslate.getLanguageCode() == 'ar'
-                              ? "فشل تحميل الصورة"
-                              : "Image failed to load",
-                          style: TextStyle(
-                            color: AppThemes.primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              child: hasMultipleImages
+                  ? _buildImageCarousel(allImages)
+                  : _buildSingleImage(allImages.first),
             ),
           ),
 
@@ -221,6 +179,15 @@ class _ProductDetailsState extends State<ProductDetails>
               ),
             ),
           ),
+
+          // Image indicators (only if multiple images)
+          if (hasMultipleImages)
+            Positioned(
+              bottom: 80,
+              left: 0,
+              right: 0,
+              child: _buildImageIndicators(allImages.length),
+            ),
 
           // Top navigation bar
           SafeArea(
@@ -245,7 +212,7 @@ class _ProductDetailsState extends State<ProductDetails>
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Ionicons.arrow_back,
                         color: Colors.black87,
                         size: 20,
@@ -299,40 +266,174 @@ class _ProductDetailsState extends State<ProductDetails>
               ),
             ),
           ),
-
-          // Discount badge
-          Positioned(
-            top: 80,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.red, Colors.redAccent],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                LocalizeAndTranslate.getLanguageCode() == 'ar'
-                    ? "خصم 15%"
-                    : "15% OFF",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSingleImage(String imageUrl) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppThemes.primaryColor.withOpacity(0.2),
+              AppThemes.primaryColor.withOpacity(0.1),
+            ],
+          ),
+        ),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppThemes.primaryColor,
+            strokeWidth: 3,
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppThemes.primaryColor.withOpacity(0.3),
+              AppThemes.primaryColor.withOpacity(0.1),
+            ],
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Ionicons.image_outline,
+                size: 64,
+                color: AppThemes.primaryColor,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                LocalizeAndTranslate.getLanguageCode() == 'ar'
+                    ? "فشل تحميل الصورة"
+                    : "Image failed to load",
+                style: TextStyle(
+                  color: AppThemes.primaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageCarousel(List<String> images) {
+    return PageView.builder(
+      controller: _pageController,
+      onPageChanged: (index) {
+        setState(() {
+          _currentPageIndex = index;
+        });
+      },
+      itemCount: images.length,
+      itemBuilder: (context, index) {
+        return _buildSingleImage(images[index]);
+      },
+    );
+  }
+
+  Widget _buildImageIndicators(int imageCount) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(imageCount, (index) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: _currentPageIndex == index ? 24 : 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: _currentPageIndex == index 
+                ? Colors.white 
+                : Colors.white.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildThumbnailImages() {
+    final allImages = widget.product.allImages;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          LocalizeAndTranslate.getLanguageCode() == 'ar'
+              ? "صور المنتج"
+              : "Product Images",
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: allImages.length,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () {
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: Container(
+                  width: 80,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _currentPageIndex == index
+                          ? AppThemes.primaryColor
+                          : Colors.grey.shade300,
+                      width: _currentPageIndex == index ? 2 : 1,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: CachedNetworkImage(
+                      imageUrl: allImages[index],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppThemes.primaryColor,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey.shade200,
+                        child: Icon(
+                          Ionicons.image_outline,
+                          color: Colors.grey.shade400,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -366,6 +467,12 @@ class _ProductDetailsState extends State<ProductDetails>
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // Thumbnail images (only if multiple images)
+                if (widget.product.hasMultipleImages) ...[
+                  _buildThumbnailImages(),
+                  const SizedBox(height: 20),
+                ],
 
                 // Product title and rating
                 Row(
@@ -782,12 +889,11 @@ class _ProductDetailsState extends State<ProductDetails>
           ),
         ],
       ),
-      child: SafeArea(
-        child: Row(
+      child: Row(
           children: [
             // Buy now button
             Expanded(
-              flex: 2,
+              flex: 1,
               child: AnimatedBuilder(
                 animation: _pulseAnimation,
                 builder: (context, child) {
@@ -804,15 +910,15 @@ class _ProductDetailsState extends State<ProductDetails>
                           LocalizeAndTranslate.getLanguageCode() == 'ar'
                               ? "تم إضافة المنتج وسيتم توجيهك للدفع"
                               : "Product added and redirecting to checkout",
-                          backgroundColor: Colors.green.withOpacity(0.1),
-                          colorText: Colors.green,
+                          backgroundColor: Colors.green,
+                          colorText: Colors.white,
                           icon: const Icon(Ionicons.checkmark_circle,
-                              color: Colors.green),
+                              color: Colors.white),
                           duration: const Duration(seconds: 3),
                         );
                       },
                       child: Container(
-                        height: 56,
+                        height: 50,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -844,7 +950,7 @@ class _ProductDetailsState extends State<ProductDetails>
                                     ? "اشتري الآن"
                                     : "Buy Now",
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
@@ -866,7 +972,7 @@ class _ProductDetailsState extends State<ProductDetails>
               child: GestureDetector(
                 onTap: _addToCart,
                 child: Container(
-                  height: 56,
+                  height: 50,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -890,7 +996,7 @@ class _ProductDetailsState extends State<ProductDetails>
                               ? "أضف للسلة"
                               : "Add to Cart",
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: AppThemes.primaryColor,
                           ),
@@ -903,7 +1009,6 @@ class _ProductDetailsState extends State<ProductDetails>
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -931,9 +1036,9 @@ class _ProductDetailsState extends State<ProductDetails>
       LocalizeAndTranslate.getLanguageCode() == 'ar'
           ? "تم إضافة $quantity من ${widget.product.title} إلى السلة"
           : "$quantity x ${widget.product.title} added to cart",
-      backgroundColor: AppThemes.primaryColor.withOpacity(0.1),
-      colorText: AppThemes.primaryColor,
-      icon: Icon(Ionicons.checkmark_circle, color: AppThemes.primaryColor),
+      backgroundColor: AppThemes.primaryColor,
+      colorText: Colors.white,
+      icon: Icon(Ionicons.checkmark_circle, color: Colors.white),
       duration: const Duration(seconds: 3),
       mainButton: TextButton(
         onPressed: () {

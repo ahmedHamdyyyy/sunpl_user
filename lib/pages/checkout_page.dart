@@ -231,6 +231,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       itemCount: widget.orderItems.length,
                       itemBuilder: (context, index) {
                         OrderItemModel orderItem = widget.orderItems[index];
+                        // Get the best available image
+                        String imageUrl = '';
+                        if (orderItem.product.hasMultipleImages) {
+                          // Use the first image from the images list
+                          imageUrl = orderItem.product.allImages.first;
+                        } else if (orderItem.product.image.isNotEmpty) {
+                          // Use the main image
+                          imageUrl = orderItem.product.image;
+                        } else {
+                          // Fallback to placeholder
+                          imageUrl = '${AppConst.url}/placeholder.jpg';
+                        }
+                        
                         return Stack(
                           fit: StackFit.expand,
                           children: [
@@ -243,12 +256,32 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                 elevation: 0.0,
                                 clipBehavior: Clip.antiAlias,
                                 child: CachedNetworkImage(
-                                  imageUrl: orderItem.product.image,
-                                  placeholder: (context, url) => const Center(
-                                      child: CircularProgressIndicator()),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(Ionicons.image, size: 48),
+                                  imageUrl: imageUrl,
+                                  placeholder: (context, url) => Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Ionicons.image_outline,
+                                      size: 32,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                   fit: BoxFit.cover,
+                                  memCacheWidth: 200,
+                                  memCacheHeight: 200,
                                 ),
                               ),
                             ),
@@ -261,10 +294,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   "${orderItem.qty}",
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white),
+                                      color: Colors.white,
+                                      fontSize: 10),
                                 ),
                               ),
                             ),
+                            // Show indicator if product has multiple images
+                            if (orderItem.product.hasMultipleImages)
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Ionicons.images_outline,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                           ],
                         );
                       }),
@@ -459,7 +511,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 AppWidgets().MyDialog(
                     context: context,
                     title: "loading",
-                    background: Colors.blue,
+                    background: AppThemes.primaryColor,
                     asset:
                         const CircularProgressIndicator(color: Colors.white));
                 AppData()

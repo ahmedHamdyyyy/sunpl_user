@@ -18,14 +18,46 @@ class SliderModel {
   final int? showToUser;
 
   factory SliderModel.fromJson(Map<String, dynamic> json) {
-    return SliderModel(
-      title: json['title'],
-      subtitle: json['subtitle'],
-      image: '${AppConst.url}/${json['image']}',
-      color: json['color'],
-      id: int.parse(json['id'].toString()),
-      showToUser: int.parse(json['showToUser'].toString()),
-    );
+    try {
+      // Handle null or missing values
+      final title = json['title']?.toString() ?? 'Unknown Title';
+      final subtitle = json['subtitle']?.toString() ?? 'Unknown Subtitle';
+      final image = json['image']?.toString();
+      final color = json['color']?.toString();
+      final id = json['id']?.toString();
+      final showToUser = json['showToUser']?.toString() ?? '1';
+      
+      // Build image URL safely
+      String? imageUrl;
+      if (image != null && image.isNotEmpty) {
+        if (image.startsWith('http')) {
+          imageUrl = image;
+        } else {
+          imageUrl = '${AppConst.url}/${image.replaceFirst('/', '')}';
+        }
+      }
+      
+      return SliderModel(
+        title: title,
+        subtitle: subtitle,
+        image: imageUrl,
+        color: color,
+        id: id != null ? int.tryParse(id) : null,
+        showToUser: int.tryParse(showToUser) ?? 1,
+      );
+    } catch (e) {
+      print('Error parsing SliderModel: $e');
+      print('JSON data: $json');
+      // Return a default slider if parsing fails
+      return SliderModel(
+        title: 'Unknown Title',
+        subtitle: 'Unknown Subtitle',
+        image: null,
+        color: null,
+        id: null,
+        showToUser: 1,
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -766,12 +766,17 @@ class _CategoryPageState extends State<CategoryPage>
             ),
             const SizedBox(height: 16),
             Text(
-              "sww".tr(),
+              futureCategoryList.toString().contains('لا يمكن الاتصال') ||
+              futureCategoryList.toString().contains('انتهت مهلة') ||
+              futureCategoryList.toString().contains('Connection')
+                  ? futureCategoryList.toString()
+                  : "sww".tr(),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(

@@ -106,9 +106,34 @@ class _SliderWidgetState extends State<SliderWidget> {
                       size: 50,
                     ),
                     Subtitle1(
-                      "sww".tr(),
+                      snapshot.error.toString().contains('لا يمكن الاتصال') ||
+                      snapshot.error.toString().contains('انتهت مهلة') ||
+                      snapshot.error.toString().contains('Connection')
+                          ? snapshot.error.toString()
+                          : "sww".tr(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
-                    )
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          futureSliderList = AppData().getSliders();
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        LocalizeAndTranslate.getLanguageCode() == 'ar'
+                            ? "إعادة المحاولة"
+                            : "Retry",
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),

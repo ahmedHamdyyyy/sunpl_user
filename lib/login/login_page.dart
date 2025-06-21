@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Trans;
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
-import 'package:userapp/utils/helpers_replacement.dart';
 import 'package:ionicons/ionicons.dart';
 
 class LoginPage extends StatefulWidget {

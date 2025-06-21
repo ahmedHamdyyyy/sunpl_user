@@ -30,27 +30,62 @@ class AppData {
 
   Future<List<SliderModel>> getSliders() async {
     List<SliderModel> sliders = [];
-    final response = await http.post(Uri.parse('$URL/api.php'),
+    try {
+      print('Fetching sliders from: $URL/api.php');
+      
+      final response = await http.post(
+        Uri.parse('$URL/api.php'),
         body: jsonEncode({"action": "getSliders"}),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-        });
-    if (response.statusCode == 200) {
-      Map resDecode = jsonDecode(response.body);
-
-      List res = resDecode['data'];
-
-      for (var element in res) {
-        sliders.add(SliderModel.fromJson(element));
+        },
+      ).timeout(const Duration(seconds: 30));
+      
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        Map resDecode = jsonDecode(response.body);
+        print('Decoded response: $resDecode');
+        
+        if (resDecode.containsKey('data')) {
+          List res = resDecode['data'];
+          print('Sliders data length: ${res.length}');
+          
+          for (var element in res) {
+            try {
+              sliders.add(SliderModel.fromJson(element));
+            } catch (e) {
+              print('Error parsing slider: $element');
+              print('Error details: $e');
+            }
+          }
+          print('Successfully parsed ${sliders.length} sliders');
+          return sliders;
+        } else {
+          print('No data field in response');
+          throw Exception('No data field in API response');
+        }
+      } else {
+        print('HTTP Error: ${response.statusCode}');
+        throw Exception('HTTP Error: ${response.statusCode} - ${response.body}');
       }
-      return sliders;
-    } else {
-      throw Exception('Failed to load album');
+    } catch (e) {
+      print('Exception in getSliders: $e');
+      if (e.toString().contains('SocketException') || 
+          e.toString().contains('Connection refused') ||
+          e.toString().contains('Failed host lookup')) {
+        throw Exception('لا يمكن الاتصال بالخادم. تحقق من اتصال الإنترنت');
+      } else if (e.toString().contains('TimeoutException')) {
+        throw Exception('انتهت مهلة الاتصال. حاول مرة أخرى');
+      } else {
+        throw Exception('حدث خطأ في تحميل الشرائح: $e');
+      }
     }
   }
 
 /* https://www.webberkn.com/nourmarket/api.php/getLatestProducts */
-  Future<List<ProductModel>> getLatestProducts() async {
+   Future<List<ProductModel>> getLatestProducts() async {
     List<ProductModel> products = [];
     final response = await http.post(Uri.parse('$URL/api.php'),
         body: jsonEncode({"action": "getLatestProducts"}),
@@ -74,45 +109,115 @@ class AppData {
 
   Future<List<CategoryModel>> getCategories() async {
     List<CategoryModel> categories = [];
-    final response = await http.post(Uri.parse('$URL/api.php'),
+    try {
+      print('Fetching categories from: $URL/api.php');
+      
+      final response = await http.post(
+        Uri.parse('$URL/api.php'),
         body: jsonEncode({"action": "getCategories"}),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-        });
-    if (response.statusCode == 200) {
-      Map resDecode = jsonDecode(response.body);
-
-      List res = resDecode['data'];
-
-      for (var element in res) {
-        categories.add(CategoryModel.fromJson(element));
+        },
+      ).timeout(const Duration(seconds: 30));
+      
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        Map resDecode = jsonDecode(response.body);
+        print('Decoded response: $resDecode');
+        
+        if (resDecode.containsKey('data')) {
+          List res = resDecode['data'];
+          print('Categories data length: ${res.length}');
+          
+          for (var element in res) {
+            try {
+              categories.add(CategoryModel.fromJson(element));
+            } catch (e) {
+              print('Error parsing category: $element');
+              print('Error details: $e');
+            }
+          }
+          print('Successfully parsed ${categories.length} categories');
+          return categories;
+        } else {
+          print('No data field in response');
+          throw Exception('No data field in API response');
+        }
+      } else {
+        print('HTTP Error: ${response.statusCode}');
+        throw Exception('HTTP Error: ${response.statusCode} - ${response.body}');
       }
-      return categories;
-    } else {
-      throw Exception('Failed to load album');
+    } catch (e) {
+      print('Exception in getCategories: $e');
+      if (e.toString().contains('SocketException') || 
+          e.toString().contains('Connection refused') ||
+          e.toString().contains('Failed host lookup')) {
+        throw Exception('لا يمكن الاتصال بالخادم. تحقق من اتصال الإنترنت');
+      } else if (e.toString().contains('TimeoutException')) {
+        throw Exception('انتهت مهلة الاتصال. حاول مرة أخرى');
+      } else {
+        throw Exception('حدث خطأ في تحميل الفئات: $e');
+      }
     }
   }
 
   Future<List<ProductModel>> getProductByCategory(
       {required int categoryId}) async {
     List<ProductModel> products = [];
-    final response = await http.post(Uri.parse('$URL/api.php'),
+    try {
+      print('Fetching products for category: $categoryId');
+      
+      final response = await http.post(
+        Uri.parse('$URL/api.php'),
         body: jsonEncode(
             {"action": "getProductByCategory", "categoryId": categoryId}),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-        });
-    if (response.statusCode == 200) {
-      Map resDecode = jsonDecode(response.body);
-
-      List res = resDecode['data'];
-
-      for (var element in res) {
-        products.add(ProductModel.fromJson(element));
+        },
+      ).timeout(const Duration(seconds: 30));
+      
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        Map resDecode = jsonDecode(response.body);
+        print('Decoded response: $resDecode');
+        
+        if (resDecode.containsKey('data')) {
+          List res = resDecode['data'];
+          print('Products data length: ${res.length}');
+          
+          for (var element in res) {
+            try {
+              products.add(ProductModel.fromJson(element));
+            } catch (e) {
+              print('Error parsing product: $element');
+              print('Error details: $e');
+            }
+          }
+          print('Successfully parsed ${products.length} products');
+          return products;
+        } else {
+          print('No data field in response');
+          throw Exception('No data field in API response');
+        }
+      } else {
+        print('HTTP Error: ${response.statusCode}');
+        throw Exception('HTTP Error: ${response.statusCode} - ${response.body}');
       }
-      return products;
-    } else {
-      throw Exception('Failed to load album');
+    } catch (e) {
+      print('Exception in getProductByCategory: $e');
+      if (e.toString().contains('SocketException') || 
+          e.toString().contains('Connection refused') ||
+          e.toString().contains('Failed host lookup')) {
+        throw Exception('لا يمكن الاتصال بالخادم. تحقق من اتصال الإنترنت');
+      } else if (e.toString().contains('TimeoutException')) {
+        throw Exception('انتهت مهلة الاتصال. حاول مرة أخرى');
+      } else {
+        throw Exception('حدث خطأ في تحميل المنتجات: $e');
+      }
     }
   }
 

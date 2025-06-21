@@ -4,6 +4,8 @@ import 'package:userapp/login/login_page.dart';
 import 'package:userapp/utils/app_const.dart';
 import 'package:userapp/utils/app_themes.dart';
 import 'package:userapp/utils/app_widgets.dart';
+import 'package:userapp/utils/language_controller.dart';
+import 'package:userapp/utils/theme_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Trans;
@@ -50,7 +52,8 @@ class _ProfilePageState extends State<ProfilePage>
     final isDark = GetStorage().read("darkMode") ?? false;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.grey[50],
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -81,17 +84,30 @@ class _ProfilePageState extends State<ProfilePage>
                 child: Column(
                   children: [
                     _buildModernProfileItem(
-                      icon: Ionicons.globe_outline,
-                      title: "language".tr(),
-                      subtitle: LocalizeAndTranslate.getLanguageCode() == 'ar'
-                          ? 'العربية'
-                          : 'English',
-                      iconBackground: const Color(0xff3DB2FF),
+                      icon: Icons.language,
+                      title: 'language'.tr(),
+                      subtitle: 'changeLanguage'.tr(),
+                      iconBackground: AppThemes.primaryColor,
                       onTap: () {
-                        LocalizeAndTranslate.setLanguageCode(
-                            LocalizeAndTranslate.getLanguageCode() == 'ar'
-                                ? 'en'
-                                : 'ar');
+                        final languageController = Get.find<LanguageController>();
+                        final currentLang = GetStorage().read("language") ?? "en";
+                        final newLang = currentLang == "en" ? "ar" : "en";
+                        
+                        // تغيير اللغة باستخدام الـ controller
+                        languageController.changeLanguage(newLang);
+                        
+                        // إعادة تحميل التطبيق
+                        Get.forceAppUpdate();
+                        
+                        // عرض رسالة تأكيد
+                        Get.snackbar(
+                          'language'.tr(),
+                          'languageChanged'.tr(),
+                          snackPosition: SnackPosition.TOP,
+                          backgroundColor: AppThemes.primaryColor,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                        );
                       },
                       isDark: isDark,
                     ),
@@ -104,19 +120,25 @@ class _ProfilePageState extends State<ProfilePage>
                       subtitle: GetStorage().read("darkMode")
                           ? "dark".tr()
                           : "light".tr(),
-                      iconBackground: const Color(0xffFC5404),
+                      iconBackground: AppThemes.primaryColor,
                       onTap: () {
-                        if (GetStorage().read("darkMode")) {
-                          setState(() {
-                            Get.changeThemeMode(ThemeMode.light);
-                            GetStorage().write("darkMode", false);
-                          });
-                        } else {
-                          setState(() {
-                            Get.changeThemeMode(ThemeMode.dark);
-                            GetStorage().write("darkMode", true);
-                          });
-                        }
+                        final themeController = Get.find<ThemeController>();
+                        
+                        // تبديل الوضع باستخدام الـ controller
+                        themeController.toggleTheme();
+                        
+                        // إعادة تحميل التطبيق لتطبيق التغييرات فوراً
+                        Get.forceAppUpdate();
+                        
+                        // عرض رسالة تأكيد
+                        Get.snackbar(
+                          'theme'.tr(),
+                          themeController.isDarkMode.value ? 'dark'.tr() : 'light'.tr(),
+                          snackPosition: SnackPosition.TOP,
+                          backgroundColor: AppThemes.primaryColor,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                        );
                       },
                       isDark: isDark,
                     ),
@@ -125,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage>
                       icon: Ionicons.log_out_outline,
                       title: "logout".tr(),
                       subtitle: "logoutDescription".tr(),
-                      iconBackground: const Color(0xffDF2E2E),
+                      iconBackground: AppThemes.primaryColor,
                       onTap: () {
                         AppWidgets().MyDialog(
                             context: context,
@@ -134,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage>
                               size: 80,
                               color: Colors.white,
                             ),
-                            background: const Color(0xff3DB2FF),
+                            background: AppThemes.primaryColor,
                             title: "logout".tr(),
                             subtitle: "logoutConfirm".tr(),
                             confirm: ElevatedButton(
@@ -152,7 +174,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     .copyWith(
                                         backgroundColor:
                                             MaterialStateProperty.all(
-                                                const Color(0xffDF2E2E))),
+                                                AppThemes.primaryColor)),
                                 child: Text("no".tr())));
                       },
                       isDark: isDark,
@@ -175,7 +197,7 @@ class _ProfilePageState extends State<ProfilePage>
                       icon: Ionicons.information,
                       title: "appName".tr(),
                       subtitle: "version".tr(),
-                      iconBackground: const Color(0xff3DB2FF),
+                      iconBackground: AppThemes.primaryColor,
                       isDark: isDark,
                     ),
                     const SizedBox(height: 12),
@@ -183,7 +205,7 @@ class _ProfilePageState extends State<ProfilePage>
                       icon: Ionicons.shield_half,
                       title: "privacyPolicy".tr(),
                       subtitle: "privacyPolicyDescription".tr(),
-                      iconBackground: const Color(0xffDF2E2E),
+                      iconBackground: AppThemes.primaryColor,
                       onTap: () async {
                         if (!await launchUrl(
                             Uri.parse(AppConst.privacyPolicyLink))) {
@@ -192,6 +214,8 @@ class _ProfilePageState extends State<ProfilePage>
                       },
                       isDark: isDark,
                     ),
+                   const SizedBox(height: 80),
+
                   ],
                 ),
               ),
@@ -212,9 +236,11 @@ class _ProfilePageState extends State<ProfilePage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isDark
-              ? [Colors.grey[800]!, Colors.grey[900]!]
-              : [Colors.white, Colors.grey[50]!],
+          colors: [
+            Theme.of(context).scaffoldBackgroundColor,
+            Theme.of(context).scaffoldBackgroundColor,
+          ],
+
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -233,8 +259,8 @@ class _ProfilePageState extends State<ProfilePage>
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xff3DB2FF).withOpacity(0.8),
-                  const Color(0xff3DB2FF),
+                  AppThemes.primaryColor.withOpacity(0.8),
+                  AppThemes.primaryColor,
                 ],
               ),
               boxShadow: [
@@ -291,7 +317,7 @@ class _ProfilePageState extends State<ProfilePage>
             width: 4,
             height: 20,
             decoration: BoxDecoration(
-              color: const Color(0xff3DB2FF),
+              color: AppThemes.primaryColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),

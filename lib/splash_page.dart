@@ -630,12 +630,12 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             child: Stack(
               children: [
                 // Wave background
-                Positioned(
+                 Positioned(
                   bottom: 0,
                   left: 0,
                   right: 0,
                   child: _buildWaveBackground(),
-                ),
+                ), 
 
                 // Advanced particles
                 _buildAdvancedParticles(),
@@ -665,7 +665,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                                             _pulseAnimation.value,
                                         child: Transform.rotate(
                                           angle:
-                                              _logoRotateAnimation.value * 0.1,
+                                              _logoRotateAnimation.value * 0.0,
                                           child: Transform.translate(
                                             offset: Offset(
                                               0,
@@ -742,37 +742,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(70),
-                                                        child: Container(
-                                                            /*  decoration:
-                                                              BoxDecoration(
-                                                            gradient:
-                                                                LinearGradient(
-                                                              begin: Alignment
-                                                                  .topLeft,
-                                                              end: Alignment
-                                                                  .bottomRight,
-                                                              colors: [
-                                                                Colors
-                                                                    .transparent,
-                                                                Colors.white
-                                                                    .withOpacity(
-                                                                        0.2),
-                                                                Colors
-                                                                    .transparent,
-                                                              ],
-                                                              stops: [
-                                                                _shimmerAnimation
-                                                                        .value -
-                                                                    0.3,
-                                                                _shimmerAnimation
-                                                                    .value,
-                                                                _shimmerAnimation
-                                                                        .value +
-                                                                    0.3,
-                                                              ],
-                                                            ),
-                                                          ), */
-                                                            ),
+                                                      
                                                       );
                                                     },
                                                   ),

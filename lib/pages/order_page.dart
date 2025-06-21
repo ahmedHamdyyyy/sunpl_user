@@ -552,12 +552,26 @@ class _OrderPageState extends State<OrderPage> with TickerProviderStateMixin {
                                 OrderItemModel orderItem =
                                     OrderItemModel.fromJson(
                                         orderItemList[itemIndex]);
+                                
+                                // Get the best available image
+                                String imageUrl = '';
+                                if (orderItem.product.hasMultipleImages) {
+                                  // Use the first image from the images list
+                                  imageUrl = orderItem.product.allImages.first;
+                                } else if (orderItem.product.image.isNotEmpty) {
+                                  // Use the main image
+                                  imageUrl = orderItem.product.image;
+                                } else {
+                                  // Fallback to placeholder
+                                  imageUrl = '${AppConst.url}/placeholder.jpg';
+                                }
+                                
                                 return Container(
                                   margin: const EdgeInsets.only(right: 8),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: CachedNetworkImage(
-                                      imageUrl: orderItem.product.image,
+                                      imageUrl: imageUrl,
                                       width: 40,
                                       height: 40,
                                       fit: BoxFit.cover,
@@ -565,11 +579,11 @@ class _OrderPageState extends State<OrderPage> with TickerProviderStateMixin {
                                         color: isDark
                                             ? Colors.grey[700]
                                             : Colors.grey[200],
-                                        child: Icon(Ionicons.image_outline,
-                                            size: 20,
-                                            color: isDark
-                                                ? Colors.grey[400]
-                                                : Colors.grey[600]),
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
                                       ),
                                       errorWidget: (context, url, error) =>
                                           Container(
@@ -964,6 +978,19 @@ class _OrderPageState extends State<OrderPage> with TickerProviderStateMixin {
   Widget _buildOrderItemCard(OrderItemModel orderItem) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Get the best available image
+    String imageUrl = '';
+    if (orderItem.product.hasMultipleImages) {
+      // Use the first image from the images list
+      imageUrl = orderItem.product.allImages.first;
+    } else if (orderItem.product.image.isNotEmpty) {
+      // Use the main image
+      imageUrl = orderItem.product.image;
+    } else {
+      // Fallback to placeholder
+      imageUrl = '${AppConst.url}/placeholder.jpg';
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -988,7 +1015,7 @@ class _OrderPageState extends State<OrderPage> with TickerProviderStateMixin {
                 topRight: Radius.circular(16),
               ),
               child: CachedNetworkImage(
-                imageUrl: orderItem.product.image,
+                imageUrl: imageUrl,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
@@ -1001,9 +1028,25 @@ class _OrderPageState extends State<OrderPage> with TickerProviderStateMixin {
                 ),
                 errorWidget: (context, url, error) => Container(
                   color: isDark ? Colors.grey[700] : Colors.grey[200],
-                  child: Icon(Ionicons.image_outline,
-                      size: 40,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Ionicons.image_outline,
+                          size: 40,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                      const SizedBox(height: 8),
+                      Text(
+                        orderItem.product.title.length > 15 
+                          ? '${orderItem.product.title.substring(0, 15)}...'
+                          : orderItem.product.title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -126,6 +126,9 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
   }
 
   Widget _buildModernCartItem(OrderItemModel orderItem, int index) {
+    final allImages = orderItem.product.allImages;
+    final hasMultipleImages = orderItem.product.hasMultipleImages;
+    
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
@@ -193,7 +196,7 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      // Enhanced product image
+                      // Enhanced product image with carousel
                       Hero(
                         tag: "cart_product${orderItem.product.id}",
                         child: Container(
@@ -214,82 +217,9 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(13),
-                            child: CachedNetworkImage(
-                              imageUrl: orderItem.product.image,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFFdab45e).withOpacity(0.2),
-                                      const Color(0xFFdab45e).withOpacity(0.1),
-                                    ],
-                                  ),
-                                ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFFdab45e),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) {
-                                // Log the error for debugging
-                                print(
-                                    'Image loading error for ${orderItem.product.title}: $error');
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        const Color(0xFFdab45e)
-                                            .withOpacity(0.2),
-                                        const Color(0xFFdab45e)
-                                            .withOpacity(0.1),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        error.toString().contains('404')
-                                            ? Ionicons.image_outline
-                                            : error.toString().contains('403')
-                                                ? Ionicons.lock_closed_outline
-                                                : Ionicons
-                                                    .cloud_offline_outline,
-                                        size: 32,
-                                        color: const Color(0xFFdab45e),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        error.toString().contains('404')
-                                            ? 'Image not found'
-                                            : error.toString().contains('403')
-                                                ? 'Access denied'
-                                                : 'Load failed',
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Color(0xFFdab45e),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                              httpHeaders: const {
-                                'User-Agent':
-                                    'Mozilla/5.0 (compatible; Flutter App)',
-                                'Accept': 'image/*,*/*;q=0.8',
-                              },
-                              cacheKey: 'cart_${orderItem.product.id}',
-                              maxHeightDiskCache: 400,
-                              maxWidthDiskCache: 400,
-                            ),
+                            child: hasMultipleImages
+                                ? _buildCartImageCarousel(allImages)
+                                : _buildCartSingleImage(allImages.first),
                           ),
                         ),
                       ),
@@ -466,6 +396,115 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCartSingleImage(String imageUrl) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFdab45e).withOpacity(0.2),
+              const Color(0xFFdab45e).withOpacity(0.1),
+            ],
+          ),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              Color(0xFFdab45e),
+            ),
+          ),
+        ),
+      ),
+      errorWidget: (context, url, error) {
+        print('Image loading error for cart item: $error');
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFdab45e).withOpacity(0.2),
+                const Color(0xFFdab45e).withOpacity(0.1),
+              ],
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                error.toString().contains('404')
+                    ? Ionicons.image_outline
+                    : error.toString().contains('403')
+                        ? Ionicons.lock_closed_outline
+                        : Ionicons.cloud_offline_outline,
+                size: 24,
+                color: const Color(0xFFdab45e),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                error.toString().contains('404')
+                    ? 'Not found'
+                    : error.toString().contains('403')
+                        ? 'Access denied'
+                        : 'Load failed',
+                style: const TextStyle(
+                  fontSize: 8,
+                  color: Color(0xFFdab45e),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
+      httpHeaders: const {
+        'User-Agent': 'Mozilla/5.0 (compatible; Flutter App)',
+        'Accept': 'image/*,*/*;q=0.8',
+      },
+      cacheKey: 'cart_${imageUrl.hashCode}',
+      maxHeightDiskCache: 200,
+      maxWidthDiskCache: 200,
+    );
+  }
+
+  Widget _buildCartImageCarousel(List<String> images) {
+    return Stack(
+      children: [
+        PageView.builder(
+          itemCount: images.length,
+          itemBuilder: (context, index) {
+            return _buildCartSingleImage(images[index]);
+          },
+        ),
+        // Image indicators for cart
+        if (images.length > 1)
+          Positioned(
+            bottom: 4,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(images.length, (index) {
+                return Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 1),
+                  decoration: BoxDecoration(
+                    color: index == 0 
+                        ? Colors.white 
+                        : Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                );
+              }),
+            ),
+          ),
+      ],
     );
   }
 
@@ -923,25 +962,31 @@ class _CartPageState extends State<CartPage> with TickerProviderStateMixin {
           }
 
           return cartItems.isNotEmpty
-              ? Column(
-                  children: [
-                    // Cart items list
-                    Expanded(
-                      child: ListView.builder(
+              ? SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Cart items list
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(top: 8),
                         itemCount: cartItems.length,
                         itemBuilder: (context, index) {
                           return _buildModernCartItem(cartItems[index], index);
                         },
                       ),
-                    ),
 
-                    // Profit driving elements
-                    _buildProfitDrivingElements(totalPrice),
+                      // Profit driving elements
+                      _buildProfitDrivingElements(totalPrice),
 
-                    // Total and checkout section
-                    _buildModernTotalSection(totalPrice),
-                  ],
+                      // Total and checkout section
+                      _buildModernTotalSection(totalPrice),
+                      
+                      // Add some bottom padding for better scrolling experience
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 )
               : _buildModernEmptyCart();
         },

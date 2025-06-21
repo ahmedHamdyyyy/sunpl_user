@@ -54,6 +54,8 @@
   "profile": "Profile",
   "settings": "Settings",
   "language": "Language",
+  "changeLanguage": "Change Language",
+  "languageChanged": "Language changed successfully",
   "theme": "Theme",
   "dark": "Dark",
   "light": "Light",

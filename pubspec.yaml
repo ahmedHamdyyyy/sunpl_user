@@ -57,16 +57,20 @@ dependencies:
   firebase_auth: ^5.6.0
   firebase_messaging: ^15.2.7
   firebase_core: ^3.14.0
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.14.3
   flutter_lints: ^5.0.0
 
 flutter_launcher_icons:
   android: "launcher_icon"
-  image_path: "assets/images/logo.jpeg"
+  ios: true
+  image_path: "assets/images/sonbol_logo_alpha.png"
+  remove_alpha_ios: true
+  background_color: "#000000"
+  theme_color: "#000000"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -17,6 +17,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:userapp/utils/language_controller.dart';
+import 'package:userapp/utils/theme_controller.dart';
 
 ValueNotifier cartItemsNotifier = ValueNotifier(<OrderItemModel>[]);
 String _debugLabelString = "";
@@ -74,19 +76,26 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'appName'.tr(),
-      localizationsDelegates: LocalizeAndTranslate.delegates,
-      locale: LocalizeAndTranslate.getLocale(),
-      supportedLocales: LocalizeAndTranslate.getLocals(),
-      theme: AppThemes.lightTheme(),
-      darkTheme: AppThemes.darkTheme(),
-      themeMode: (GetStorage().read("darkMode") ?? false)
-          ? ThemeMode.dark
-          : ThemeMode.light,
-      home: const SplashPage(),
-    );
+    // تهيئة الـ controllers
+    final languageController = Get.put(LanguageController());
+    final themeController = Get.put(ThemeController());
+    
+    return Obx(() {
+      return Directionality(
+        textDirection: languageController.textDirection.value,
+        child: GetMaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'appName'.tr(),
+          localizationsDelegates: LocalizeAndTranslate.delegates,
+          locale: LocalizeAndTranslate.getLocale(),
+          supportedLocales: LocalizeAndTranslate.getLocals(),
+          theme: AppThemes.lightTheme(),
+          darkTheme: AppThemes.darkTheme(),
+          themeMode: themeController.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
+          home: const SplashPage(),
+        ),
+      );
+    });
   }
 }
 
@@ -119,39 +128,138 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: pages.elementAt(_selectedIndex),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: const Icon(Ionicons.home_outline),
-            activeIcon: const Icon(Ionicons.home),
-            label: 'home'.tr(),
+      body: Stack(
+        children: [
+          Center(
+            child: pages.elementAt(_selectedIndex),
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Ionicons.grid_outline),
-            activeIcon: const Icon(Ionicons.grid),
-            label: 'categories'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Ionicons.cart_outline),
-            activeIcon: const Icon(Ionicons.cart),
-            label: 'cart'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Ionicons.bag_handle_outline),
-            activeIcon: const Icon(Ionicons.bag_handle),
-            label: 'orders'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Ionicons.person_outline),
-            activeIcon: const Icon(Ionicons.person),
-            label: 'profile'.tr(),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildModernBottomNav(),
           ),
         ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Widget _buildModernBottomNav() {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode.value;
+
+    return Container(
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
+            spreadRadius: 3,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(25),
+        child: Container(
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                icon: Ionicons.home_outline,
+                activeIcon: Ionicons.home,
+                label: 'home'.tr(),
+                index: 0,
+                isDark: isDark,
+              ),
+              _buildNavItem(
+                icon: Ionicons.grid_outline,
+                activeIcon: Ionicons.grid,
+                label: 'categories'.tr(),
+                index: 1,
+                isDark: isDark,
+              ),
+              _buildNavItem(
+                icon: Ionicons.cart_outline,
+                activeIcon: Ionicons.cart,
+                label: 'cart'.tr(),
+                index: 2,
+                isDark: isDark,
+              ),
+              _buildNavItem(
+                icon: Ionicons.bag_handle_outline,
+                activeIcon: Ionicons.bag_handle,
+                label: 'orders'.tr(),
+                index: 3,
+                isDark: isDark,
+              ),
+              _buildNavItem(
+                icon: Ionicons.person_outline,
+                activeIcon: Ionicons.person,
+                label: 'profile'.tr(),
+                index: 4,
+                isDark: isDark,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+    required bool isDark,
+  }) {
+    final isSelected = _selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () => _onItemTapped(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppThemes.primaryColor.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                isSelected ? activeIcon : icon,
+                key: ValueKey(isSelected),
+                color: isSelected
+                    ? AppThemes.primaryColor
+                    : (isDark ? Colors.white60 : Colors.grey[600]),
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected
+                    ? AppThemes.primaryColor
+                    : (isDark ? Colors.white60 : Colors.grey[600]),
+              ),
+              child: Text(label),
+            ),
+          ],
+        ),
       ),
     );
   }
