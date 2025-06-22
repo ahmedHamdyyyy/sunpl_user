@@ -25,6 +25,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -61,7 +62,9 @@ class _ProfilePageState extends State<ProfilePage>
             style: TextStyle(
                 color: isDark ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.w600,
-                fontSize: 20)),
+                fontSize: 20,
+                fontFamily: "Poppins",
+                ),),
         centerTitle: true,
       ),
       body: FadeTransition(
